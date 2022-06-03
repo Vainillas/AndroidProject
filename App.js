@@ -6,36 +6,41 @@
  * @flow strict-local
  */
 
-import type {Node} from 'react';
-import React from 'react';
-import {StatusBar, StyleSheet, useColorScheme, View} from 'react-native';
-
-import {Colors} from 'react-native/Libraries/NewAppScreen';
-import List from './src/components/List';
-import Detail from './src/components/Detail';
-
-
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-      <View style={[backgroundStyle,styles.container]}>
-        <List/>
-        <Detail/>
-      </View>
-  );
-};
-
-const styles = StyleSheet.create({
+ import type {Node} from 'react';
+ import React from 'react';
+ import {StyleSheet, useColorScheme} from 'react-native';
+ 
+ import {Colors} from 'react-native/Libraries/NewAppScreen';
+ import {DarkTheme, DefaultTheme, NavigationContainer} from '@react-navigation/native';
+ import {createNativeStackNavigator} from "@react-navigation/native-stack";
+ import ListScreen from './src/screen/ListScreen';
+ import DetailScreen from './src/screen/DetailScreen';
+ 
+ 
+ const Stack = createNativeStackNavigator();
+ const App: () => Node = () => {
+ 
+     const scheme = useColorScheme();
+     return (
+         <NavigationContainer theme={scheme === 'dark' ? DarkTheme : DefaultTheme}>
+             <Stack.Navigator>
+                 <Stack.Screen
+                     name="List"
+                     component={ListScreen}
+                     options={{ title: 'Listado', headerTitleAlign: 'center' }}
+                 />
+                 <Stack.Screen name="Detail" component={DetailScreen}
+                 options={{title:'Detalle', headerTitleAlign: 'center'}}/>
+             </Stack.Navigator>
+         </NavigationContainer>
+     );
+ };
+ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     padding: 8,
   },
 });
-
-export default App;
+ 
+ export default App;

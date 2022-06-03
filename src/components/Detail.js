@@ -1,72 +1,92 @@
 import React, {useEffect, useState} from 'react';
-import {enviroment} from '../enviroments/enviroment';
-import autorization from '../util/Autorization';
-import {StyleSheet, Text, useColorScheme, View} from 'react-native';
-import {Error} from './Error';
+import {
+    RefreshControl,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useColorScheme,
+} from 'react-native';
 import Loading from './Loading';
 import Location from '../models/location';
+import {enviroment} from '../enviroment';
+import {Error} from './Error';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
-
-const Detail = () => {
+import Authorization from '../utils/Authorization';
+interface Props {
+    id: number;
+}
+const Detail = (props: Props) => {
+    const [loading, setLoading] = useState(true);
+    const [location, setLocation] = useState(null);
+    const [error, setError] = useState(null);
     const isDarkMode = useColorScheme() === 'dark';
     const textStyle = {
         color: isDarkMode ? Colors.lighter : Colors.darker,
     };
-    const [location, setLocation] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const backgroundStyle = {
+        backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    };
+    useEffect(() => {
+            loadData();
+        },
+        []);
 
     useEffect(() => {
-        loadData();
     }, []);
+    const loadData = () => {
+        setError(null);
+        setLoading(true);
+        fetch(enviroment.baseURL + 'api/locations/' + props.id, Authorization)
+            .then(res => res.json())
+            .then(data => {
+                setLocation(new Location(data));
+                setLoading(false);
+            }).catch(e => setError(e));
+    };
 
     const handleRefresh = () => {
         loadData();
     };
-    const loadData = () => {
-        setLoading(true);
-        setError(null);
-        fetch(enviroment.baseURL + 'api/locations/' + 24, autorization)
-            .then(res => res.json())
-            .then(data => {
-                let location = new Location(data);
-                setLocation(location);
-                setLoading(false);
-            })
-            .catch(e => {
-                setLoading(false);
-                setError(e);
-            });
-    };
-
-    if (error != null) {
-        return <Error onRefresh={handleRefresh}></Error>;
+    if (error) {
+        return <Error onRefresh={() => loadData()}></Error>;
     }
-    if (loading || location == null) {
-        return <Loading></Loading>;
-    }
-    return <View style={styles.container}>
-        <Text style={[textStyle, styles.textTitle]}>{location.name}</Text>
-        <Text style={[textStyle, styles.text]}>{location.contact}</Text>
-        <Text style={[textStyle, styles.text]}>{location.latitude} </Text>
-        <Text style={[textStyle, styles.text]}>{location.longitude} </Text>
-    </View>;
+    return (
+        loading ?
+            <Loading></Loading>
+            : <ScrollView style={[backgroundStyle,styles.container]}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={loading}
+                        onRefresh={handleRefresh}
+                    />
+                }><SafeAreaView>
+                <TouchableOpacity>
+                    <Text style={[textStyle, styles.textTitle]}>{location.name}</Text>
+                    <Text style={[textStyle, styles.text]}>{location.contact}</Text>
+                </TouchableOpacity>
+            </SafeAreaView>
+            </ScrollView>
+    );
 };
 export default Detail;
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
         margin: 10,
         borderRadius: 10,
-        justifyContent: 'center',
         padding: 8,
     },
     textTitle: {
         fontWeight: 'bold',
         fontSize: 16,
+        flex: 1,
         textAlign: 'center',
     },
     text: {
+        flex: 1,
         textAlign: 'justify',
     },
 });
